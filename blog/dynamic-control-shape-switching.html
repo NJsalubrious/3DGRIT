@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Control Shapes | 3D_GRIT Dev Blog</title>
+    <meta name="description" content="Switching control types on the fly.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
+
+        :root {
+            --bg: #050505;
+            --accent: #f59e0b;
+            --surface: #09090b;
+            --border: #18181b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: crosshair;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .status-header {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #3f3f46;
+        }
+
+        .node-link {
+            font-size: 0.6rem;
+            color: #27272a;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: color 0.3s;
+        }
+
+        .node-link:hover {
+            color: #52525b;
+        }
+
+        /* Video container */
+        .video-stage {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        .video-stage iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Blog prose */
+        .blog-prose h2 {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .blog-prose h3 {
+            color: #d4d4d8;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .blog-prose p {
+            font-size: 0.8rem;
+            line-height: 1.8;
+            color: #71717a;
+            margin-bottom: 1.25rem;
+        }
+
+        .blog-prose strong {
+            color: #a1a1aa;
+        }
+
+        .blog-prose code {
+            background: #18181b;
+            color: var(--accent);
+            padding: 0.15em 0.4em;
+            font-size: 0.75rem;
+            border-radius: 2px;
+        }
+
+        .blog-prose ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .blog-prose ul li {
+            font-size: 0.8rem;
+            color: #71717a;
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .blog-prose ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 0.7rem;
+        }
+
+        /* Tag pills */
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 0.2rem 0.6rem;
+            border: 1px solid #27272a;
+            color: #52525b;
+            transition: all 0.3s;
+        }
+
+        .tag-pill:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Expandable sections */
+        .expand-section {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .expand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            user-select: none;
+        }
+
+        .expand-header:hover {
+            background: rgba(245, 158, 11, 0.03);
+        }
+
+        .expand-header h3 {
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #d4d4d8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .expand-chevron {
+            color: #3f3f46;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease, color 0.3s;
+        }
+
+        .expand-section.open .expand-chevron {
+            transform: rotate(90deg);
+            color: var(--accent);
+        }
+
+        .expand-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s ease;
+            padding: 0 1.25rem;
+        }
+
+        .expand-section.open .expand-body {
+            max-height: 2000px;
+            padding: 0 1.25rem 1.5rem;
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #18181b; }
+    </style>
+</head>
+<body class="grid-bg">
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="p-6 border-b border-zinc-900 bg-black/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <a href="../index.html" class="text-white font-black text-2xl tracking-tighter hover:text-amber-500 transition-colors" style="text-decoration:none;">3D_GRIT</a>
+            <div class="h-4 w-px bg-zinc-800"></div>
+            <a href="index.html" class="status-header hover:text-zinc-400 transition-colors" style="text-decoration:none;">◂ Dev_Blog</a>
+        </div>
+        <div class="flex gap-8">
+            <a href="https://youtube.com/@3dgrit" target="_blank" class="node-link">YouTube</a>
+            <a href="https://www.instagram.com/3d_Grit" target="_blank" class="node-link">Instagram</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto py-20 px-6">
+        
+        <!-- Post Meta -->
+        <div class="mb-12">
+            <span class="status-header block mb-4">Dev_Log // Entry_003 // 2026-04-18</span>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
+                Dynamic Control Shapes
+            </h1>
+            <p class="text-sm text-zinc-500 leading-relaxed max-w-2xl border-l-2 border-zinc-900 pl-6 mb-6">
+                Switching control types on the fly. Building a custom tool panel to automatically swap control curves based on context, visibility needs, and animator preference.
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <span class="tag-pill">Tools</span>
+                <span class="tag-pill">UI</span>
+                <span class="tag-pill">Blender</span>
+            </div>
+        </div>
+
+        <!-- Primary Video -->
+        <div class="mb-16">
+            <div class="video-stage">
+                <iframe 
+                    src="https://www.youtube.com/embed/2gn7QxH5Rlk?rel=0&modestbranding=1&color=white" 
+                    title="Dynamic Control Shapes Switcher - 3D GRIT"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="flex justify-between items-center mt-3 px-1">
+                <span class="text-[9px] text-zinc-700 uppercase tracking-widest">Primary_Signal // YouTube</span>
+                <a href="https://youtu.be/2gn7QxH5Rlk" target="_blank" class="text-[9px] text-zinc-700 uppercase tracking-widest hover:text-amber-500 transition-colors" style="text-decoration:none;">Watch_External ▸</a>
+            </div>
+        </div>
+
+        <!-- Blog Content — Expandable Sections -->
+        <div class="blog-prose">
+
+            <div class="expand-section open">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>Eliminating Clutter</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        A rig with 400 controls on screen is unusable. Traditional layered visibility approaches in Blender can turn things into a mess of hunting via the Properties panel. 
+                    </p>
+                    <p>
+                        The solution implemented here is a fluid UI structure where selecting parent controls surfaces secondary and tertiary rings automatically, hiding the visual noise until it's specifically required by the user.
+                    </p>
+                </div>
+            </div>
+
+            <div class="expand-section">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>Shape Definitions</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        Controls map dynamically to JSON libraries mapping exact WGDC offsets and rotational scale data. It guarantees parity whether an animator is working at 10x scale or base character dimensions. They can change shape types (box, rings, arrows) with immediate UI interaction, removing the standard Blender friction.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Post Navigation -->
+        <div class="mt-20 pt-10 border-t border-zinc-900 flex justify-between items-center">
+            <a href="index.html" class="node-link">◂ All_Posts</a>
+            <span class="text-[9px] text-zinc-800 uppercase tracking-widest">Entry_003 // End_Signal</span>
+        </div>
+
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 py-16 text-center">
+        <p class="text-[9px] text-zinc-800 uppercase tracking-[0.6em]">3D_GRIT // N. JONES // SYDNEY 2026</p>
+    </footer>
+
+    <script>
+        function toggleExpand(header) {
+            const section = header.parentElement;
+            section.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

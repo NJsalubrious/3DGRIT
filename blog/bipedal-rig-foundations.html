@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bipedal Rig Foundations | 3D_GRIT Dev Blog</title>
+    <meta name="description" content="Building a production-grade bipedal rig from scratch. Skeleton hierarchy, IK/FK switching, and why most auto-riggers miss the point.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
+
+        :root {
+            --bg: #050505;
+            --accent: #f59e0b;
+            --surface: #09090b;
+            --border: #18181b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: crosshair;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .status-header {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #3f3f46;
+        }
+
+        .node-link {
+            font-size: 0.6rem;
+            color: #27272a;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: color 0.3s;
+        }
+
+        .node-link:hover {
+            color: #52525b;
+        }
+
+        /* Video container */
+        .video-stage {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        .video-stage iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Blog prose */
+        .blog-prose h2 {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .blog-prose h3 {
+            color: #d4d4d8;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .blog-prose p {
+            font-size: 0.8rem;
+            line-height: 1.8;
+            color: #71717a;
+            margin-bottom: 1.25rem;
+        }
+
+        .blog-prose strong {
+            color: #a1a1aa;
+        }
+
+        .blog-prose code {
+            background: #18181b;
+            color: var(--accent);
+            padding: 0.15em 0.4em;
+            font-size: 0.75rem;
+            border-radius: 2px;
+        }
+
+        .blog-prose ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .blog-prose ul li {
+            font-size: 0.8rem;
+            color: #71717a;
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .blog-prose ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 0.7rem;
+        }
+
+        /* Tag pills */
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 0.2rem 0.6rem;
+            border: 1px solid #27272a;
+            color: #52525b;
+            transition: all 0.3s;
+        }
+
+        .tag-pill:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Expandable sections */
+        .expand-section {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .expand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            user-select: none;
+        }
+
+        .expand-header:hover {
+            background: rgba(245, 158, 11, 0.03);
+        }
+
+        .expand-header h3 {
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #d4d4d8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .expand-chevron {
+            color: #3f3f46;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease, color 0.3s;
+        }
+
+        .expand-section.open .expand-chevron {
+            transform: rotate(90deg);
+            color: var(--accent);
+        }
+
+        .expand-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s ease;
+            padding: 0 1.25rem;
+        }
+
+        .expand-section.open .expand-body {
+            max-height: 2000px;
+            padding: 0 1.25rem 1.5rem;
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #18181b; }
+    </style>
+</head>
+<body class="grid-bg">
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="p-6 border-b border-zinc-900 bg-black/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <a href="../index.html" class="text-white font-black text-2xl tracking-tighter hover:text-amber-500 transition-colors" style="text-decoration:none;">3D_GRIT</a>
+            <div class="h-4 w-px bg-zinc-800"></div>
+            <a href="index.html" class="status-header hover:text-zinc-400 transition-colors" style="text-decoration:none;">◂ Dev_Blog</a>
+        </div>
+        <div class="flex gap-8">
+            <a href="https://youtube.com/@3dgrit" target="_blank" class="node-link">YouTube</a>
+            <a href="https://www.instagram.com/3d_Grit" target="_blank" class="node-link">Instagram</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto py-20 px-6">
+        
+        <!-- Post Meta -->
+        <div class="mb-12">
+            <span class="status-header block mb-4">Dev_Log // Entry_001 // 2026-04-20</span>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
+                Bipedal Rig<br>Foundations
+            </h1>
+            <p class="text-sm text-zinc-500 leading-relaxed max-w-2xl border-l-2 border-zinc-900 pl-6 mb-6">
+                The first pass at a production-grade bipedal rig. Skeleton hierarchy, IK/FK switching foundations, and why most auto-riggers miss the point. This is the start of the 3D_GRIT rigging framework — built aggressive, built to last.
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <span class="tag-pill">Rigging</span>
+                <span class="tag-pill">Bipedal</span>
+                <span class="tag-pill">Blender</span>
+                <span class="tag-pill">IK/FK</span>
+            </div>
+        </div>
+
+        <!-- Primary Video -->
+        <div class="mb-16">
+            <div class="video-stage">
+                <iframe 
+                    src="https://www.youtube.com/embed/EwoU5QGHSfc?rel=0&modestbranding=1&color=white" 
+                    title="Bipedal Rig Foundations - 3D GRIT"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="flex justify-between items-center mt-3 px-1">
+                <span class="text-[9px] text-zinc-700 uppercase tracking-widest">Primary_Signal // YouTube</span>
+                <a href="https://youtu.be/EwoU5QGHSfc" target="_blank" class="text-[9px] text-zinc-700 uppercase tracking-widest hover:text-amber-500 transition-colors" style="text-decoration:none;">Watch_External ▸</a>
+            </div>
+        </div>
+
+        <!-- Blog Content — Expandable Sections -->
+        <div class="blog-prose">
+
+            <div class="expand-section open">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>The Problem with Auto-Riggers</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        Every auto-rigger I've used gives you 80% of what you need and then fights you for the last 20%. That last 20% is where the character lives. The specific shoulder roll behaviour. The exact hip pivot. The way the spine distributes twist across segments. Auto-riggers abstract this away under the assumption that "good enough" is acceptable. It's not.
+                    </p>
+                    <p>
+                        The 3D_GRIT Bipedal Rig is built from zero. No Rigify. No auto-anything. Every bone is placed with intention, every constraint is authored by hand. This isn't about being difficult. It's about being <strong>precise</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="expand-section">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>Skeleton Hierarchy Design</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        The hierarchy follows a strict naming convention: <code>L_</code> / <code>R_</code> side prefixes, <code>DEF_</code> for deformation bones, <code>MCH_</code> for mechanism bones, <code>CTL_</code> for control bones. No ambiguity. No guesswork when you're scripting on top of the rig.
+                    </p>
+                    <ul>
+                        <li><strong>Root → COG → Spine chain (4 segments)</strong> — Full FK with optional spline IK overlay</li>
+                        <li><strong>Shoulder → Upper Arm → Lower Arm → Hand</strong> — IK/FK switching with seamless snapping</li>
+                        <li><strong>Hip → Upper Leg → Lower Leg → Foot</strong> — Reverse foot lock with ball/toe pivot isolation</li>
+                        <li><strong>Twist bones</strong> — 2x per upper arm, 2x per upper leg, 1x per forearm</li>
+                    </ul>
+                    <p>
+                        The naming convention isn't cosmetic. It's structural. Every automation script in the 3D_GRIT pipeline reads these prefixes to identify bone roles. Change the naming, you break the pipeline. That's by design — it enforces discipline.
+                    </p>
+                </div>
+            </div>
+
+            <div class="expand-section">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>IK/FK Switching Architecture</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        The switch isn't a single float that blends between two poses. That's the lazy approach and it creates drift. Instead, the IK/FK system uses a <strong>snap-on-switch</strong> methodology:
+                    </p>
+                    <ul>
+                        <li>When switching from FK → IK, the IK target and pole vector are computed from the current FK pose and snapped into position <strong>before</strong> the influence is toggled</li>
+                        <li>When switching from IK → FK, each FK bone in the chain copies the evaluated world-space rotation from the IK result</li>
+                        <li>The switch happens in a single frame — no interpolation, no drift, no cleanup</li>
+                    </ul>
+                    <p>
+                        This is handled by a custom operator in the 3D_GRIT panel. The animator presses one button. The math happens behind the scenes. The character doesn't pop. That's the standard.
+                    </p>
+                </div>
+            </div>
+
+            <div class="expand-section">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <h3>What's Next</h3>
+                    <span class="expand-chevron">▸</span>
+                </div>
+                <div class="expand-body">
+                    <p>
+                        This is Entry_001. The skeleton is in place. The switching works. The next log will cover the <strong>space-switching system</strong> — parent-space changes for hands (world, hip, head, custom), foot pinning, and the constraint architecture that enables rapid context changes mid-animation.
+                    </p>
+                    <p>
+                        After that: facial rigging pipeline, corrective shape key automation, and the full 3D_GRIT control panel UI.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Post Navigation -->
+        <div class="mt-20 pt-10 border-t border-zinc-900 flex justify-between items-center">
+            <a href="index.html" class="node-link">◂ All_Posts</a>
+            <span class="text-[9px] text-zinc-800 uppercase tracking-widest">Entry_001 // End_Signal</span>
+        </div>
+
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 py-16 text-center">
+        <p class="text-[9px] text-zinc-800 uppercase tracking-[0.6em]">3D_GRIT // N. JONES // SYDNEY 2026</p>
+    </footer>
+
+    <script>
+        function toggleExpand(header) {
+            const section = header.parentElement;
+            section.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

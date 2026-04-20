@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Blog | 3D_GRIT</title>
+    <meta name="description" content="3D_GRIT development logs. Rigging frameworks, pipeline automation, and technical art breakdowns.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
+
+        :root {
+            --bg: #050505;
+            --accent: #f59e0b;
+            --surface: #09090b;
+            --border: #18181b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: crosshair;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .status-header {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #3f3f46;
+        }
+
+        .node-link {
+            font-size: 0.6rem;
+            color: #27272a;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: color 0.3s;
+        }
+
+        .node-link:hover {
+            color: #52525b;
+        }
+
+        /* Blog card */
+        .blog-card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            overflow: hidden;
+            transition: border-color 0.4s ease, transform 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .blog-card:hover {
+            border-color: #27272a;
+            transform: translateY(-2px);
+        }
+
+        .blog-card:hover .card-thumb {
+            filter: grayscale(0.3) contrast(1);
+        }
+
+        .blog-card:hover .card-title {
+            color: var(--accent);
+        }
+
+        .card-thumb {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            filter: grayscale(0.8) contrast(1.1);
+            transition: filter 0.5s ease;
+            display: block;
+            background: #111;
+        }
+
+        .card-meta {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .card-date {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: #3f3f46;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.4rem;
+            transition: color 0.3s;
+            line-height: 1.2;
+        }
+
+        .card-subtitle {
+            font-size: 0.65rem;
+            color: #52525b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-excerpt {
+            font-size: 0.7rem;
+            color: #52525b;
+            line-height: 1.7;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #18181b;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 0.15rem 0.5rem;
+            border: 1px solid #27272a;
+            color: #3f3f46;
+        }
+
+        /* Video indicator */
+        .video-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 0.15rem 0.5rem;
+        }
+
+        .video-badge::before {
+            content: '▶';
+            font-size: 0.4rem;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .filter-btn {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: #3f3f46;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Loading skeleton */
+        .skeleton-card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        .skeleton-thumb {
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-line {
+            height: 0.75rem;
+            background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            margin-bottom: 0.5rem;
+            border-radius: 2px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #18181b; }
+    </style>
+</head>
+<body class="grid-bg">
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="p-6 border-b border-zinc-900 bg-black/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <a href="../index.html" class="text-white font-black text-2xl tracking-tighter hover:text-amber-500 transition-colors" style="text-decoration:none;">3D_GRIT</a>
+            <div class="h-4 w-px bg-zinc-800"></div>
+            <span class="status-header hidden md:block">Dev_Blog // All_Entries</span>
+        </div>
+        <div class="flex gap-8">
+            <a href="../index.html" class="node-link">Main_Hub ▸</a>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto py-20 px-6">
+        
+        <!-- Blog Header -->
+        <section class="max-w-2xl mb-16">
+            <span class="status-header block mb-4">Signal_Feed // Active</span>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
+                Dev_Log
+            </h1>
+            <p class="text-xs text-zinc-500 leading-relaxed border-l-2 border-zinc-900 pl-6">
+                Build notes, breakdowns, and process documentation. Every tool in the 3D_GRIT pipeline gets logged here — the thinking behind the code, the architecture decisions, and the production tests that determine if something survives or gets scrapped.
+            </p>
+        </section>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filterBar">
+            <button class="filter-btn active" data-filter="all">All_Entries</button>
+        </div>
+
+        <!-- Post Count -->
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-[9px] text-zinc-700 uppercase tracking-widest" id="postCount">Loading...</span>
+            <span class="text-[9px] text-zinc-700 uppercase tracking-widest">Sorted: Latest_First</span>
+        </div>
+
+        <!-- Blog Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="blogGrid">
+            <!-- Skeleton loaders while fetching -->
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div style="padding: 1.25rem 1.5rem;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line" style="width: 80%; height: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 100%; margin-top: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 90%;"></div>
+                </div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div style="padding: 1.25rem 1.5rem;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line" style="width: 80%; height: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 100%; margin-top: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 90%;"></div>
+                </div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div style="padding: 1.25rem 1.5rem;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line" style="width: 80%; height: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 100%; margin-top: 1rem;"></div>
+                    <div class="skeleton-line" style="width: 90%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State (hidden by default) -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <p class="text-zinc-700 text-sm uppercase tracking-widest">No_Entries_Found</p>
+            <p class="text-zinc-800 text-xs mt-2">Adjust filters or check back later.</p>
+        </div>
+
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 py-16 text-center">
+        <p class="text-[9px] text-zinc-800 uppercase tracking-[0.6em]">3D_GRIT // N. JONES // SYDNEY 2026</p>
+    </footer>
+
+    <script>
+        let allPosts = [];
+        let allTags = new Set();
+        let activeFilter = 'all';
+
+        async function loadPosts() {
+            try {
+                const response = await fetch('posts.json');
+                allPosts = await response.json();
+                
+                // Sort by date, newest first
+                allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Collect all tags
+                allPosts.forEach(post => {
+                    if (post.tags) {
+                        post.tags.forEach(tag => allTags.add(tag));
+                    }
+                });
+
+                buildFilterBar();
+                renderPosts(allPosts);
+            } catch (e) {
+                console.error('Failed to load posts:', e);
+                document.getElementById('blogGrid').innerHTML = '';
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('postCount').textContent = 'Error loading posts';
+            }
+        }
+
+        function buildFilterBar() {
+            const bar = document.getElementById('filterBar');
+            allTags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.dataset.filter = tag;
+                btn.textContent = tag;
+                btn.addEventListener('click', () => filterByTag(tag, btn));
+                bar.appendChild(btn);
+            });
+        }
+
+        function filterByTag(tag, btn) {
+            activeFilter = tag;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (tag === 'all') {
+                renderPosts(allPosts);
+            } else {
+                const filtered = allPosts.filter(p => p.tags && p.tags.includes(tag));
+                renderPosts(filtered);
+            }
+        }
+
+        // Attach click to the "All" button
+        document.querySelector('.filter-btn[data-filter="all"]').addEventListener('click', function() {
+            activeFilter = 'all';
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            renderPosts(allPosts);
+        });
+
+        function renderPosts(posts) {
+            const grid = document.getElementById('blogGrid');
+            const empty = document.getElementById('emptyState');
+            const count = document.getElementById('postCount');
+
+            if (posts.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                count.textContent = '0 entries';
+                return;
+            }
+
+            empty.classList.add('hidden');
+            count.textContent = `${posts.length} ${posts.length === 1 ? 'entry' : 'entries'}`;
+
+            grid.innerHTML = posts.map(post => {
+                const tagsHtml = (post.tags || []).map(t => 
+                    `<span class="tag-pill">${t}</span>`
+                ).join('');
+
+                const videoBadge = post.video 
+                    ? `<span class="video-badge">Video</span>` 
+                    : '';
+
+                const thumbSrc = post.thumbnail || '';
+                const thumbHtml = thumbSrc
+                    ? `<img class="card-thumb" src="${thumbSrc}" alt="${post.title}" loading="lazy">`
+                    : `<div class="card-thumb" style="display:flex;align-items:center;justify-content:center;"><span class="text-zinc-800 text-xs uppercase tracking-widest">No_Preview</span></div>`;
+
+                return `
+                    <a href="${post.slug}.html" class="blog-card" id="post-${post.slug}">
+                        ${thumbHtml}
+                        <div class="card-meta">
+                            <div class="card-date">${formatDate(post.date)}</div>
+                            <div class="card-title">${post.title}</div>
+                            <div class="card-subtitle">${post.subtitle || ''}</div>
+                            <p class="card-excerpt">${post.excerpt || ''}</p>
+                            <div class="card-tags">
+                                ${videoBadge}
+                                ${tagsHtml}
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        // Init
+        loadPosts();
+    </script>
+</body>
+</html>

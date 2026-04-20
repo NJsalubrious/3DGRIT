@@ -1,0 +1,42 @@
+[
+    {
+        "slug": "bipedal-rig-foundations",
+        "title": "Bipedal Rig Foundations",
+        "subtitle": "Building the skeletal architecture from scratch",
+        "date": "2026-04-20",
+        "tags": ["rigging", "bipedal", "blender"],
+        "thumbnail": "https://img.youtube.com/vi/EwoU5QGHSfc/maxresdefault.jpg",
+        "video": "https://www.youtube.com/embed/EwoU5QGHSfc",
+        "excerpt": "The first pass at a production-grade bipedal rig. Skeleton hierarchy, IK/FK switching foundations, and why most auto-riggers miss the point."
+    },
+    {
+        "slug": "automated-facial-rigging-blendshapes",
+        "title": "Automated Facial Rigging",
+        "subtitle": "Generating blendshapes to drive bones",
+        "date": "2026-04-19",
+        "tags": ["rigging", "facial", "blender", "automation"],
+        "thumbnail": "https://img.youtube.com/vi/xg_fJ5Va_4k/maxresdefault.jpg",
+        "video": "https://www.youtube.com/embed/xg_fJ5Va_4k",
+        "excerpt": "Auto-generating a full suite of facial blendshapes from a single input shape, and wiring them directly to the underlying bone structure."
+    },
+    {
+        "slug": "dynamic-control-shape-switching",
+        "title": "Dynamic Control Shapes",
+        "subtitle": "Switching control types on the fly",
+        "date": "2026-04-18",
+        "tags": ["tools", "ui", "blender"],
+        "thumbnail": "https://img.youtube.com/vi/2gn7QxH5Rlk/maxresdefault.jpg",
+        "video": "https://www.youtube.com/embed/2gn7QxH5Rlk",
+        "excerpt": "Building a custom tool panel to automatically swap control curves based on context, visibility needs, and animator preference."
+    },
+    {
+        "slug": "basic-ik-fk-auto-clavicle",
+        "title": "Auto Clavicle / FK IK",
+        "subtitle": "Cracking the shoulder complex",
+        "date": "2026-03-15",
+        "tags": ["rigging", "bipedal", "blender"],
+        "thumbnail": "https://img.youtube.com/vi/axuYejqu9Os/maxresdefault.jpg",
+        "video": "https://www.youtube.com/embed/axuYejqu9Os",
+        "excerpt": "An early prototype building out the foundational FK/IK limb logic and solving the notoriously difficult automatic clavicle rotation in Blender."
+    }
+]
