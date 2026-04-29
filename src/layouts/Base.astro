@@ -38,11 +38,11 @@ const {
         </div>
         <div class="flex gap-4 items-center">
             <slot name="nav">
-                <a href="/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'tools' ? 'text-zinc-500 pointer-events-none' : 'text-white'}`}>TOOLS</a>
+                <a href="/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'tools' ? 'text-white pointer-events-none' : 'text-zinc-500 hover:text-white'}`}>TOOLS</a>
                 <span class="text-zinc-700 text-[0.65rem] mx-1">/</span>
-                <a href="/tools/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'dev_journal' ? 'text-zinc-500 pointer-events-none' : 'text-white'}`}>DEV_JOURNAL</a>
+                <a href="/tools/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'dev_journal' ? 'text-white pointer-events-none' : 'text-zinc-500 hover:text-white'}`}>DEV_JOURNAL</a>
                 <span class="text-zinc-700 text-[0.65rem] mx-1">/</span>
-                <a href="/ai/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'ai_experiments' ? 'text-zinc-500 pointer-events-none' : 'text-amber-500'}`}>AI_EXPERIMENTS</a>
+                <a href="/ai/" class={`node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] py-2 transition-colors ${activeNav === 'ai_experiments' ? 'text-white pointer-events-none' : 'text-zinc-500 hover:text-white'}`}>AI_EXPERIMENTS</a>
             </slot>
         </div>
     </header>
