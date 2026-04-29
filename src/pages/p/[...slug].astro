@@ -34,6 +34,7 @@ const ytLink = post.data.category === 'ai-experimentation'
     title={`${post.data.title} | 3D_GRIT`} 
     description={post.data.title}
     youtubeLink={ytLink}
+    activeNav={post.data.category === 'ai-experimentation' ? 'ai_experiments' : 'dev_journal'}
 >
 
     <main class="max-w-4xl mx-auto py-16 px-6">
