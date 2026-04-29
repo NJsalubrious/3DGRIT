@@ -45,15 +45,10 @@ body {
 
 .node-link {
     font-size: 0.6rem;
-    color: #27272a;
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     transition: color 0.3s;
-}
-
-.node-link:hover {
-    color: #52525b;
 }
 
 .banner-frame {
