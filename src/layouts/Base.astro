@@ -4,9 +4,14 @@ import '../styles/global.css';
 interface Props {
     title: string;
     description?: string;
+    youtubeLink?: string;
 }
 
-const { title, description = '3D_GRIT — Technical Art & Pipeline Lab' } = Astro.props;
+const { 
+    title, 
+    description = '3D_GRIT — Technical Art & Pipeline Lab',
+    youtubeLink = 'https://www.youtube.com/@Tech_Art_PixelStortion'
+} = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -29,9 +34,11 @@ const { title, description = '3D_GRIT — Technical Art & Pipeline Lab' } = Astr
             <div class="h-4 w-px bg-zinc-800"></div>
             <span class="status-header hidden md:block">Technical_Art // Dev_Log</span>
         </div>
-        <div class="flex gap-8 items-center">
+        <div class="flex gap-4 items-center">
             <slot name="nav">
-                <a href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">Hub</a>
+                <a href="/tools/" class="node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] hover:text-white transition-colors" style="color:#52525b;">THE_TOOLS</a>
+                <span class="text-zinc-800 text-[0.65rem]">/</span>
+                <a href="/ai/" class="node-link uppercase tracking-[0.2em] font-bold text-[0.65rem] text-amber-600 hover:text-amber-500 transition-colors">AI_EXPERIMENTS</a>
             </slot>
         </div>
     </header>
@@ -47,7 +54,7 @@ const { title, description = '3D_GRIT — Technical Art & Pipeline Lab' } = Astr
                 <br>No not like that. Here:
             </p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <a href="https://youtube.com/@3dgrit" target="_blank"
+                <a href={youtubeLink} target="_blank"
                     class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors" style="text-decoration:none;color:#a1a1aa;">YouTube</a>
                 <a href="https://www.instagram.com/3d_Grit" target="_blank"
                     class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors" style="text-decoration:none;color:#a1a1aa;">Instagram</a>

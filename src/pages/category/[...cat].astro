@@ -58,11 +58,17 @@ function getThumb(post: any) {
     }
     return null;
 }
+
+const ytLink = cat === 'ai-experimentation' 
+    ? 'https://www.youtube.com/@AI_Experiments_PixelStortion' 
+    : 'https://www.youtube.com/@Tech_Art_PixelStortion';
 ---
 
-<Base title={`${meta.label} | 3D_GRIT Dev Log`} description={meta.description}>
-
-    <a slot="nav" href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">◂ All_Modules</a>
+<Base 
+    title={`${meta.label} | 3D_GRIT Dev Log`} 
+    description={meta.description}
+    youtubeLink={ytLink}
+>
 
     <main class="max-w-4xl mx-auto py-16 px-6">
 

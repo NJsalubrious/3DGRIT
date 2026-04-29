@@ -2,7 +2,8 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
-const allPosts = await getCollection('posts');
+const allPostsRaw = await getCollection('posts');
+const allPosts = allPostsRaw.filter(post => post.data.category !== 'ai-experimentation');
 allPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -28,17 +29,15 @@ allPosts.forEach(post => {
 const tagsList = Array.from(allTags).sort();
 ---
 
-<Base title="Dev Blog | 3D_GRIT" description="3D_GRIT development logs. Rigging frameworks, pipeline automation, and technical art breakdowns.">
-
-    <a slot="nav" href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">◂ Main_Hub</a>
+<Base title="The Tools | 3D_GRIT" description="3D_GRIT development logs. Rigging frameworks, pipeline automation, and technical art breakdowns.">
 
     <main class="max-w-6xl mx-auto py-20 px-6">
         
         <!-- Blog Header -->
         <section class="max-w-2xl mb-16">
-            <span class="status-header block mb-4">Signal_Feed // Active</span>
+            <span class="status-header block mb-4">Technical_Art // Active</span>
             <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
-                Dev_Log
+                THE_TOOLS
             </h1>
             <p class="text-xs text-zinc-500 leading-relaxed border-l-2 border-zinc-900 pl-6">
                 Build notes, breakdowns, and process documentation. Every tool in the 3D_GRIT pipeline gets logged here — the thinking behind the code, the architecture decisions, and the production tests that determine if something survives or gets scrapped.

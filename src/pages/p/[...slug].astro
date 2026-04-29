@@ -24,9 +24,17 @@ const catLabels: Record<string, string> = {
     'normative-tools': 'Normative Tools',
     'ai-experimentation': 'AI Experimentation',
 };
+
+const ytLink = post.data.category === 'ai-experimentation' 
+    ? 'https://www.youtube.com/@AI_Experiments_PixelStortion' 
+    : 'https://www.youtube.com/@Tech_Art_PixelStortion';
 ---
 
-<Base title={`${post.data.title} | 3D_GRIT`} description={post.data.title}>
+<Base 
+    title={`${post.data.title} | 3D_GRIT`} 
+    description={post.data.title}
+    youtubeLink={ytLink}
+>
 
     <main class="max-w-4xl mx-auto py-16 px-6">
 
