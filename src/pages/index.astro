@@ -1,0 +1,178 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts');
+allPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d: Date) {
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+function getThumb(post: any) {
+    if (post.data.thumbnail) return post.data.thumbnail;
+    if (post.data.video) {
+        const m = post.data.video.match(/embed\/([^?]+)/);
+        if (m) return `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`;
+    }
+    return null;
+}
+
+const latestPosts = allPosts.slice(0, 4);
+---
+
+<Base title="3D GRIT | Technical Art & Pipeline Lab">
+
+    <!-- Override nav slot with Dev_Blog link like the original -->
+    <a slot="nav" href="/blog/" class="node-link"
+        style="color:#52525b; font-size: 0.85rem; font-weight: 800;">Dev_Blog</a>
+
+    <main class="max-w-7xl mx-auto py-20 px-6 space-y-32">
+
+        <section class="hero-split">
+            <div class="hero-text">
+                <p class="status-header mb-4">Pipeline Status: Running</p>
+                <h2 class="text-5xl font-black text-white leading-[0.9] mb-10 tracking-tighter uppercase">
+                    Raw Frameworks.<br>
+                    Built for Purpose.
+                </h2>
+                <p class="text-sm leading-relaxed text-zinc-500 border-l-2 border-zinc-900 pl-8">
+                    I like tools. You like tools. We like tools. Instrumental Tools. Solid. Calm. Not trying to please
+                    but pleasing none the less.<br><br>I also like addons, plugins and related things to do with 3D.
+                </p>
+            </div>
+
+            <!-- Compact Blog Feed - matches original -->
+            <div class="sidebar-feed" id="sidebarFeed">
+                <div class="feed-header">
+                    <span>Latest_Signals</span>
+                </div>
+                {latestPosts.length === 0 ? (
+                    <p style="font-size:0.55rem;color:#27272a;text-transform:uppercase;letter-spacing:0.15em;padding:0.5rem 0;">No entries yet</p>
+                ) : (
+                    latestPosts.map(post => {
+                        const thumb = getThumb(post);
+                        const d = new Date(post.data.date);
+                        return (
+                            <a href={`/p/${post.id}/`} class="feed-item">
+                                {thumb ? (
+                                    <img class="fi-thumb" src={thumb} alt={post.data.title} loading="lazy" />
+                                ) : (
+                                    <div class="fi-thumb" style="display:flex;align-items:center;justify-content:center;background:#111;">
+                                        <span style="color:#1a1a1a;font-size:0.4rem;">▪</span>
+                                    </div>
+                                )}
+                                <div class="fi-body">
+                                    <span class="fi-title">
+                                        {post.data.title}
+                                        {post.data.video && <span class="fi-video-dot" title="Has video"></span>}
+                                    </span>
+                                    <span class="fi-date">{fmtDate(d)}</span>
+                                </div>
+                            </a>
+                        );
+                    })
+                )}
+            </div>
+        </section>
+
+        <!-- Protocol 01: Tools with Weight -->
+        <section class="module group">
+            <div class="banner-frame brutalist-border"
+                style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_ToolsWithWeight_instrumentalToolsAreUseful_banner_PixelStortion.png');">
+            </div>
+            <div class="lab-box p-10 mt-[-40px] relative z-10 mx-4 md:mx-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-end shadow-2xl">
+                <div>
+                    <span class="status-header mb-4 block">Protocol_01 // Structural_Weight</span>
+                    <h3 class="text-4xl font-black text-white mb-6 uppercase tracking-tighter">Tools with Weight</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed max-w-sm">
+                        Structure, rigged perception, mental unwrapping and projection. No not psychology. 3D Tools with
+                        GRIT. Do the psychology metaphors seem unnecessary? Your wrong. They entertain me.
+                        <br>I like Rigging. I like Automating. Enough said.
+                    </p>
+                </div>
+                <div class="flex flex-col items-end gap-6">
+                    <span class="text-[9px] text-zinc-700 uppercase tracking-widest font-bold">Build Phase: Heavy Automation</span>
+                    <a href="/category/tools-with-weight/"
+                        class="text-[10px] text-zinc-500 uppercase tracking-widest max-w-[250px] text-right leading-loose hover:text-amber-500 transition-colors cursor-pointer"
+                        style="text-decoration:none;">Some personalities are tools.
+                        Instrumental. Structural. Unburdened by conscience.</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+            <!-- Protocol 02: Calculated Margins -->
+            <div class="module flex flex-col group">
+                <div class="banner-frame brutalist-border !h-72"
+                    style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_CalculatedMargins_Sometimes_calculateTheMargins_banner_PixelStortion.png');">
+                </div>
+                <div class="lab-box p-10 mt-[-20px] relative z-10 mx-6 flex-1 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <span class="status-header mb-4 block">Protocol_02 // Margin_Threshold</span>
+                        <h3 class="text-2xl font-black text-white mb-4 uppercase tracking-tighter">Calculated Margins</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed mb-10">
+                            A place for tools that sit on the margins until I'm convinced otherwise. Tools that look
+                            like bugs from the wrong angle until you're up close. Or far away.
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-zinc-900 pt-8">
+                        <span class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Topology Analysis v2.1</span>
+                        <a href="/category/calculated-margins/"
+                            class="text-[9px] text-zinc-500 uppercase tracking-widest text-right max-w-[250px] hover:text-amber-500 transition-colors cursor-pointer"
+                            style="text-decoration:none;">Some tools exist on the margine. Some characters calculate the margines</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocol 03: Defensive Fluidity -->
+            <div class="module flex flex-col group">
+                <div class="banner-frame brutalist-border !h-72"
+                    style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_volitile_tools_for_volitile_banner_PixelStortion.png');">
+                </div>
+                <div class="lab-box p-10 mt-[-20px] relative z-10 mx-6 flex-1 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <span class="status-header mb-4 block">Protocol_03 // Kinetic_Entropy</span>
+                        <h3 class="text-2xl font-black text-white mb-4 uppercase tracking-tighter">Defensive Fluidity</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed mb-10">
+                            Volatile tools. Manic Physics and defensive fluidity. Controlled chaos. In short - Tools
+                            that go bang. Or flow with force. These are for the moments that require the bridge to burn.
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-zinc-900 pt-8">
+                        <span class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Procedural Decay v0.8</span>
+                        <a href="/category/defensive-fluidity/"
+                            class="text-[9px] text-zinc-500 uppercase tracking-widest text-right max-w-[250px] hover:text-amber-500 transition-colors cursor-pointer"
+                            style="text-decoration:none;">Some tools have a balst radius. Some characters stand on the bridge whilst it burns</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Protocol 04: Normative Tools -->
+        <section class="module group max-w-5xl mx-auto">
+            <div class="banner-frame brutalist-border !h-48"
+                style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_normative_tools_for_normative_banner_PixelStortion.png');">
+            </div>
+            <div class="lab-box p-8 flex flex-col md:flex-row justify-between items-center mt-[-10px] relative z-10 mx-10">
+                <div>
+                    <span class="status-header mb-1 block">Protocol_04 // Perpendicular_Vector</span>
+                    <h4 class="text-lg font-black text-white uppercase italic tracking-tighter">Normative Tools</h4>
+                </div>
+                <p class="text-[10px] text-zinc-500 max-w-sm text-center md:text-right mt-6 md:mt-0 uppercase tracking-widest leading-loose">
+                    What is normal? Don't care? Ill tell you anyway. Its the center of every bell curve clumped
+                    together. That's Normal. What tools go
+                    here? Any that I see as sitting perfectly adjacent to a flat polygon. Square, centred and perfectly
+                    normalised. Blender isnt normal. Maya is. Disagree? I like your energy. I am making Blender feel
+                    like Maya. Hate This? I do to. But lets not the gatekeeping. Too rigged. I'm used to Maya and can't
+                    be bothered changing. But I can be bothered writing a long list of tools that make Blender behave
+                    like Maya. Hate this? Good. Energy is useful.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+</Base>

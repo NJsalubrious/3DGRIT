@@ -1,0 +1,150 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts');
+allPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d: Date) {
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+function getThumb(post: any) {
+    if (post.data.thumbnail) return post.data.thumbnail;
+    if (post.data.video) {
+        const m = post.data.video.match(/embed\/([^?]+)/);
+        if (m) return `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`;
+    }
+    return null;
+}
+
+// Extract unique tags
+const allTags = new Set<string>();
+allPosts.forEach(post => {
+    if (post.data.tags) {
+        post.data.tags.forEach((tag: string) => allTags.add(tag));
+    }
+});
+const tagsList = Array.from(allTags).sort();
+---
+
+<Base title="Dev Blog | 3D_GRIT" description="3D_GRIT development logs. Rigging frameworks, pipeline automation, and technical art breakdowns.">
+
+    <a slot="nav" href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">◂ Main_Hub</a>
+
+    <main class="max-w-6xl mx-auto py-20 px-6">
+        
+        <!-- Blog Header -->
+        <section class="max-w-2xl mb-16">
+            <span class="status-header block mb-4">Signal_Feed // Active</span>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
+                Dev_Log
+            </h1>
+            <p class="text-xs text-zinc-500 leading-relaxed border-l-2 border-zinc-900 pl-6">
+                Build notes, breakdowns, and process documentation. Every tool in the 3D_GRIT pipeline gets logged here — the thinking behind the code, the architecture decisions, and the production tests that determine if something survives or gets scrapped.
+            </p>
+        </section>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filterBar">
+            <button class="filter-btn active" data-filter="all">All_Entries</button>
+            {tagsList.map(tag => (
+                <button class="filter-btn" data-filter={tag}>{tag}</button>
+            ))}
+        </div>
+
+        <!-- Post Count -->
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-[9px] text-zinc-700 uppercase tracking-widest" id="postCount">{allPosts.length} entries</span>
+            <span class="text-[9px] text-zinc-700 uppercase tracking-widest">Sorted: Latest_First</span>
+        </div>
+
+        <!-- Blog Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="blogGrid">
+            {allPosts.map(post => {
+                const thumb = getThumb(post);
+                const d = new Date(post.data.date);
+                const postTags = post.data.tags || [];
+                return (
+                    <a href={`/p/${post.id}/`} class="blog-card" data-tags={postTags.join(',')}>
+                        {thumb ? (
+                            <img class="card-thumb" src={thumb} alt={post.data.title} loading="lazy" />
+                        ) : (
+                            <div class="card-thumb" style="display:flex;align-items:center;justify-content:center;">
+                                <span class="text-zinc-800 text-xs uppercase tracking-widest">No_Preview</span>
+                            </div>
+                        )}
+                        <div class="card-meta">
+                            <div class="card-date">{fmtDate(d)}</div>
+                            <div class="card-title">{post.data.title}</div>
+                            {post.data.subtitle && <div class="card-subtitle">{post.data.subtitle}</div>}
+                            {post.data.excerpt && <p class="card-excerpt">{post.data.excerpt}</p>}
+                            <div class="card-tags">
+                                {post.data.video && <span class="video-badge">Video</span>}
+                                {postTags.map(tag => (
+                                    <span class="tag-pill">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </a>
+                );
+            })}
+        </div>
+
+        <!-- Empty State (hidden by default) -->
+        <div id="emptyState" class="hidden text-center py-20 w-full col-span-full">
+            <p class="text-zinc-700 text-sm uppercase tracking-widest">No_Entries_Found</p>
+            <p class="text-zinc-800 text-xs mt-2">Adjust filters or check back later.</p>
+        </div>
+
+    </main>
+
+</Base>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const blogCards = document.querySelectorAll('.blog-card');
+        const emptyState = document.getElementById('emptyState');
+        const postCount = document.getElementById('postCount');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active button
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filter = btn.getAttribute('data-filter');
+                let visibleCount = 0;
+
+                blogCards.forEach(card => {
+                    const el = card as HTMLElement;
+                    if (filter === 'all') {
+                        el.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        const tagsStr = el.getAttribute('data-tags');
+                        const tags = tagsStr ? tagsStr.split(',') : [];
+                        if (tags.includes(filter)) {
+                            el.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            el.style.display = 'none';
+                        }
+                    }
+                });
+
+                // Update count and empty state
+                if (visibleCount === 0) {
+                    emptyState?.classList.remove('hidden');
+                } else {
+                    emptyState?.classList.add('hidden');
+                }
+                
+                if (postCount) {
+                    postCount.textContent = `${visibleCount} ${visibleCount === 1 ? 'entry' : 'entries'}`;
+                }
+            });
+        });
+    });
+</script>

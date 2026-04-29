@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const CATEGORIES: Record<string, { label: string; protocol: string; description: string }> = {
+    'tools-with-weight': {
+        label: 'Tools with Weight',
+        protocol: 'Protocol_01 // Structural_Weight',
+        description: 'I like Rigging. I like Automating. Enough said.',
+    },
+    'calculated-margins': {
+        label: 'Calculated Margins',
+        protocol: 'Protocol_02 // Margin_Threshold',
+        description: 'Tools that sit on the margins until I\'m convinced otherwise.',
+    },
+    'defensive-fluidity': {
+        label: 'Defensive Fluidity',
+        protocol: 'Protocol_03 // Kinetic_Entropy',
+        description: 'Volatile tools. Controlled chaos. Tools that go bang.',
+    },
+    'normative-tools': {
+        label: 'Normative Tools',
+        protocol: 'Protocol_04 // Perpendicular_Vector',
+        description: 'Making Blender feel like Maya. Energy is useful.',
+    },
+    'ai-experimentation': {
+        label: 'AI Experimentation',
+        protocol: 'Protocol_05 // Neural_Forge',
+        description: 'Testing the boundary between artist control and AI generation.',
+    },
+};
+
+export async function getStaticPaths() {
+    const cats = ['tools-with-weight','calculated-margins','defensive-fluidity','normative-tools','ai-experimentation'];
+    return cats.map(cat => ({
+        params: { cat },
+        props: { cat },
+    }));
+}
+
+const { cat } = Astro.props;
+const meta = CATEGORIES[cat] || { label: cat, protocol: '', description: '' };
+
+const allPosts = await getCollection('posts');
+const catPosts = allPosts
+    .filter(p => p.data.category === cat)
+    .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d: Date) {
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+function getThumb(post: any) {
+    if (post.data.thumbnail) return post.data.thumbnail;
+    if (post.data.video) {
+        const m = post.data.video.match(/embed\/([^?]+)/);
+        if (m) return `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`;
+    }
+    return null;
+}
+---
+
+<Base title={`${meta.label} | 3D_GRIT Dev Log`} description={meta.description}>
+
+    <a slot="nav" href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">◂ All_Modules</a>
+
+    <main class="max-w-4xl mx-auto py-16 px-6">
+
+        <!-- Category Header -->
+        <div class="mt-8 mb-12">
+            <span class="status-header block mb-4">{meta.protocol} // {catPosts.length} {catPosts.length === 1 ? 'entry' : 'entries'}</span>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-6">
+                {meta.label}
+            </h1>
+            <p class="text-xs text-zinc-500 leading-relaxed border-l-2 border-zinc-900 pl-6 max-w-xl">
+                {meta.description}
+            </p>
+        </div>
+
+        <!-- Posts -->
+        {catPosts.length === 0 ? (
+            <div class="text-center py-20">
+                <p class="text-zinc-700 text-sm uppercase tracking-widest">No_Entries_Yet</p>
+                <p class="text-zinc-800 text-xs mt-2">Development logs will appear here as work begins.</p>
+            </div>
+        ) : (
+            <div class="space-y-8">
+                {catPosts.map((post, i) => {
+                    const d = new Date(post.data.date);
+                    const thumb = getThumb(post);
+                    const entryNum = String(catPosts.length - i).padStart(3, '0');
+                    return (
+                        <a href={`/p/${post.id}/`} class="block border border-zinc-900 bg-zinc-950 p-6 hover:border-zinc-800 transition-all group" style="text-decoration:none;">
+                            <div class="flex gap-6 items-start">
+                                {thumb && (
+                                    <img
+                                        src={thumb}
+                                        alt={post.data.title}
+                                        class="w-32 h-20 object-cover flex-shrink-0 border border-zinc-800 filter grayscale contrast-110 group-hover:grayscale-0 transition-all"
+                                        loading="lazy"
+                                    />
+                                )}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <span class="status-header">Entry_{entryNum}</span>
+                                        <span class="status-header">{fmtDate(d)}</span>
+                                        {post.data.video && <span class="fi-video-dot" title="Has video"></span>}
+                                    </div>
+                                    <h2 class="text-lg font-black text-white uppercase tracking-tighter leading-tight group-hover:text-amber-500 transition-colors mb-2">
+                                        {post.data.title}
+                                    </h2>
+                                    {post.data.tags && post.data.tags.length > 0 && (
+                                        <div class="flex flex-wrap gap-1 mt-2">
+                                            {post.data.tags.map(tag => (
+                                                <span class="tag-pill">{tag}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </a>
+                    );
+                })}
+            </div>
+        )}
+
+    </main>
+
+</Base>

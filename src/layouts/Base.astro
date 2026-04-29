@@ -1,0 +1,61 @@
+---
+import '../styles/global.css';
+
+interface Props {
+    title: string;
+    description?: string;
+}
+
+const { title, description = '3D_GRIT — Technical Art & Pipeline Lab' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <title>{title}</title>
+    <meta name="description" content={description}>
+</head>
+<body class="grid-bg">
+    <div class="scanlines"></div>
+
+    <header class="p-6 border-b border-zinc-900 bg-black/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <a href="/" class="text-white font-black text-2xl tracking-tighter hover:text-amber-500 transition-colors" style="text-decoration:none;">3D_GRIT</a>
+            <div class="h-4 w-px bg-zinc-800"></div>
+            <span class="status-header hidden md:block">Technical_Art // Dev_Log</span>
+        </div>
+        <div class="flex gap-8 items-center">
+            <slot name="nav">
+                <a href="/" class="node-link" style="color:#52525b; font-size: 0.85rem; font-weight: 800;">Hub</a>
+            </slot>
+        </div>
+    </header>
+
+    <slot />
+
+    <footer class="bg-black border-t border-zinc-900 py-32 text-center">
+        <div class="max-w-xl mx-auto px-6">
+            <h2 class="text-3xl font-black text-white uppercase tracking-tighter mb-8">Follow the Build</h2>
+            <p class="text-xs text-zinc-500 mb-12 leading-relaxed">
+                I am not releasing these tools yet.
+                <br>If you want to see the progress then follow me some place.
+                <br>No not like that. Here:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="https://youtube.com/@3dgrit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors" style="text-decoration:none;color:#a1a1aa;">YouTube</a>
+                <a href="https://www.instagram.com/3d_Grit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors" style="text-decoration:none;color:#a1a1aa;">Instagram</a>
+                <a href="https://twitter.com/3dgrit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors" style="text-decoration:none;color:#a1a1aa;">X_Twitter</a>
+            </div>
+            <p class="mt-24 text-[9px] text-zinc-800 uppercase tracking-[0.6em]">3D_GRIT // N. JONES // SYDNEY 2026</p>
+        </div>
+    </footer>
+</body>
+</html>

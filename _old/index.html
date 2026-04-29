@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D GRIT | Technical Art & Pipeline Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
+
+        :root {
+            --bg: #050505;
+            --accent: #f59e0b;
+            --surface: #09090b;
+            --border: #18181b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: crosshair;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .banner-frame {
+            height: 380px;
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(1) contrast(1.1);
+            transition: filter 0.6s ease;
+        }
+
+        .module:hover .banner-frame {
+            filter: grayscale(0.5) contrast(1);
+        }
+
+        .status-header {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #3f3f46;
+        }
+
+        .lab-box {
+            border: 1px solid #18181b;
+            background: #09090b;
+        }
+
+        .node-link {
+            font-size: 0.6rem;
+            color: #27272a;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: color 0.3s;
+        }
+
+        .node-link:hover {
+            color: #52525b;
+        }
+
+        /* --- Compact Sidebar Feed --- */
+        .hero-split {
+            display: flex;
+            gap: 3rem;
+            align-items: flex-start;
+        }
+
+        .hero-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-feed {
+            width: 320px;
+            flex-shrink: 0;
+            border-left: 1px solid #18181b;
+            padding-left: 1.5rem;
+            opacity: 0.7;
+            transition: opacity 0.4s ease;
+        }
+
+        .sidebar-feed:hover {
+            opacity: 1;
+        }
+
+        .feed-header {
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #27272a;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feed-header a {
+            color: #27272a;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.5rem;
+            letter-spacing: 0.15em;
+        }
+
+        .feed-header a:hover {
+            color: var(--accent);
+        }
+
+        .feed-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #111;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feed-item:first-child {
+            padding-top: 0;
+        }
+
+        .feed-item:last-child {
+            border-bottom: none;
+        }
+
+        .feed-item:hover {
+            padding-left: 0.4rem;
+        }
+
+        .feed-item:hover .fi-title {
+            color: var(--accent);
+        }
+
+        .feed-item:hover .fi-thumb {
+            filter: grayscale(0.3) contrast(1);
+            border-color: #27272a;
+        }
+
+        .fi-thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            flex-shrink: 0;
+            filter: grayscale(0.9) contrast(1.1);
+            transition: all 0.4s ease;
+            border: 1px solid var(--border);
+        }
+
+        .fi-body {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .fi-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            line-height: 1.3;
+            transition: color 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fi-date {
+            font-size: 0.5rem;
+            color: #27272a;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-top: 0.15rem;
+        }
+
+        .fi-video-dot {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-left: 0.35rem;
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+
+        /* Skeleton for feed */
+        .fi-skeleton {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #111;
+        }
+
+        .fi-sk-thumb {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+            background-size: 200% 100%;
+            animation: skShimmer 1.5s infinite;
+            flex-shrink: 0;
+        }
+
+        .fi-sk-line {
+            height: 0.5rem;
+            background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+            background-size: 200% 100%;
+            animation: skShimmer 1.5s infinite;
+            border-radius: 2px;
+        }
+
+        @keyframes skShimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Mobile: stack feed below hero */
+        @media (max-width: 768px) {
+            .hero-split {
+                flex-direction: column;
+            }
+
+            .sidebar-feed {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #18181b;
+                padding-left: 0;
+                padding-top: 1.5rem;
+                margin-top: 1rem;
+                opacity: 0.8;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #18181b;
+        }
+    </style>
+</head>
+
+<body class="grid-bg">
+    <div class="scanlines"></div>
+
+    <header
+        class="p-6 border-b border-zinc-900 bg-black/90 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <h1 class="text-white font-black text-2xl tracking-tighter">3D_GRIT</h1>
+            <div class="h-4 w-px bg-zinc-800"></div>
+            <span class="status-header hidden md:block">Technical_Art // Dev_Log</span>
+        </div>
+        <div class="flex gap-8 items-center">
+            <a href="blog/index.html" class="node-link"
+                style="color:#52525b; font-size: 0.85rem; font-weight: 800;">Dev_Blog</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-20 px-6 space-y-32">
+
+        <section class="hero-split">
+            <div class="hero-text">
+                <p class="status-header mb-4">Pipeline Status: Running</p>
+                <h2 class="text-5xl font-black text-white leading-[0.9] mb-10 tracking-tighter uppercase">
+                    Raw Frameworks.<br>
+                    Built for Purpose.
+                </h2>
+                <p class="text-sm leading-relaxed text-zinc-500 border-l-2 border-zinc-900 pl-8">
+                    I like tools. You like tools. We like tools. Instrumental Tools. Solid. Calm. Not trying to please
+                    but pleasing none the less.<br><br>I also like addons, plugins and related things to do with 3D.
+                </p>
+            </div>
+
+            <!-- Compact Blog Feed -->
+            <div class="sidebar-feed" id="sidebarFeed">
+                <div class="feed-header">
+                    <span>Latest_Signals</span>
+                    <a href="blog/index.html">All ▸</a>
+                </div>
+                <div id="feedItems">
+                    <div class="fi-skeleton">
+                        <div class="fi-sk-thumb"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0.35rem;">
+                            <div class="fi-sk-line" style="width:75%"></div>
+                            <div class="fi-sk-line" style="width:40%"></div>
+                        </div>
+                    </div>
+                    <div class="fi-skeleton">
+                        <div class="fi-sk-thumb"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0.35rem;">
+                            <div class="fi-sk-line" style="width:60%"></div>
+                            <div class="fi-sk-line" style="width:35%"></div>
+                        </div>
+                    </div>
+                    <div class="fi-skeleton">
+                        <div class="fi-sk-thumb"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0.35rem;">
+                            <div class="fi-sk-line" style="width:80%"></div>
+                            <div class="fi-sk-line" style="width:45%"></div>
+                        </div>
+                    </div>
+                    <div class="fi-skeleton" style="border-bottom:none;">
+                        <div class="fi-sk-thumb"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0.35rem;">
+                            <div class="fi-sk-line" style="width:70%"></div>
+                            <div class="fi-sk-line" style="width:30%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="module group">
+            <div class="banner-frame brutalist-border"
+                style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_ToolsWithWeight_instrumentalToolsAreUseful_banner_PixelStortion.png');">
+            </div>
+            <div
+                class="lab-box p-10 mt-[-40px] relative z-10 mx-4 md:mx-12 grid grid-cols-1 md:grid-cols-2 gap-16 items-end shadow-2xl">
+                <div>
+                    <span class="status-header mb-4 block">Protocol_01 // Structural_Weight</span>
+                    <h3 class="text-4xl font-black text-white mb-6 uppercase tracking-tighter">Tools with Weight</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed max-w-sm">
+                        Structure, rigged perception, mental unwrapping and projection. No not psychology. 3D Tools with
+                        GRIT. Do the psychology metaphors seem unnecessary? Your wrong. They entertain me.
+                        <br>I like Rigging. I like Automating. Enough said.
+                    </p>
+                </div>
+                <div class="flex flex-col items-end gap-6">
+                    <span class="text-[9px] text-zinc-700 uppercase tracking-widest font-bold">Build Phase: Heavy
+                        Automation</span>
+                    <a href="https://dominicryker.com" target="_blank"
+                        class="text-[10px] text-zinc-500 uppercase tracking-widest max-w-[250px] text-right leading-loose hover:text-amber-500 transition-colors cursor-pointer"
+                        style="text-decoration:none;">Some personalities are tools.
+                        Instrumental. Structural. Unburdened by conscience.</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+            <div class="module flex flex-col group">
+                <div class="banner-frame brutalist-border !h-72"
+                    style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_CalculatedMargins_Sometimes_calculateTheMargins_banner_PixelStortion.png');">
+                </div>
+                <div class="lab-box p-10 mt-[-20px] relative z-10 mx-6 flex-1 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <span class="status-header mb-4 block">Protocol_02 // Margin_Threshold</span>
+                        <h3 class="text-2xl font-black text-white mb-4 uppercase tracking-tighter">Calculated Margins
+                        </h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed mb-10">
+                            A place for tools that sit on the margins until I'm convinced otherwise. Tools that look
+                            like bugs from the wrong angle until you're up close. Or far away.
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-zinc-900 pt-8">
+                        <span class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Topology Analysis
+                            v2.1</span>
+                        <a href="https://ethelryker.com" target="_blank"
+                            class="text-[9px] text-zinc-500 uppercase tracking-widest text-right max-w-[250px] hover:text-amber-500 transition-colors cursor-pointer"
+                            style="text-decoration:none;">Some tools exist on the margine. Some characters calculate the
+                            margines</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module flex flex-col group">
+                <div class="banner-frame brutalist-border !h-72"
+                    style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_volitile_tools_for_volitile_banner_PixelStortion.png');">
+                </div>
+                <div class="lab-box p-10 mt-[-20px] relative z-10 mx-6 flex-1 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <span class="status-header mb-4 block">Protocol_03 // Kinetic_Entropy</span>
+                        <h3 class="text-2xl font-black text-white mb-4 uppercase tracking-tighter">Defensive Fluidity
+                        </h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed mb-10">
+                            Volatile tools. Manic Physics and defensive fluidity. Controlled chaos. In short - Tools
+                            that go bang. Or flow with force. These are for the moments that require the bridge to burn.
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-zinc-900 pt-8">
+                        <span class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Procedural Decay
+                            v0.8</span>
+                        <a href="https://islaband.com" target="_blank"
+                            class="text-[9px] text-zinc-500 uppercase tracking-widest text-right max-w-[250px] hover:text-amber-500 transition-colors cursor-pointer"
+                            style="text-decoration:none;">Some tools have a balst radius. Some characters stand on the
+                            bridge whilst it burns</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <section class="module group max-w-5xl mx-auto">
+            <div class="banner-frame brutalist-border !h-48"
+                style="background-image: url('https://raw.githubusercontent.com/NJsalubrious/3DGRIT/main/library/images/3DGRIT_normative_tools_for_normative_banner_PixelStortion.png');">
+            </div>
+            <div
+                class="lab-box p-8 flex flex-col md:flex-row justify-between items-center mt-[-10px] relative z-10 mx-10">
+                <div>
+                    <span class="status-header mb-1 block">Protocol_04 // Perpendicular_Vector</span>
+                    <h4 class="text-lg font-black text-white uppercase italic tracking-tighter">Normative Tools</h4>
+                </div>
+                <p
+                    class="text-[10px] text-zinc-500 max-w-sm text-center md:text-right mt-6 md:mt-0 uppercase tracking-widest leading-loose">
+                    What is normal? Don't care? Ill tell you anyway. Its the center of every bell curve clumped
+                    together. That's Normal. What tools go
+                    here? Any that I see as sitting perfectly adjacent to a flat polygon. Square, centred and perfectly
+                    normalised. Blender isnt normal. Maya is. Disagree? I like your energy. I am making Blender feel
+                    like Maya. Hate This? I do to. But lets not the gatekeeping. Too rigged. I'm used to Maya and can't
+                    be bothered changing. But I can be bothered writing a long list of tools that make Blender behave
+                    like Maya. Hate this? Good. Energy is useful.
+                </p>
+            </div>
+        </section>
+
+
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 py-32 text-center">
+        <div class="max-w-xl mx-auto px-6">
+            <h2 class="text-3xl font-black text-white uppercase tracking-tighter mb-8">Follow the Build</h2>
+            <p class="text-xs text-zinc-500 mb-12 leading-relaxed">
+                I am not releasing these tools yet.
+                <br>If you want to see the progress then follow me some place.
+                <br>No not like that. Here:
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="https://youtube.com/@3dgrit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors">YouTube</a>
+                <a href="https://www.instagram.com/3d_Grit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors">Instagram</a>
+                <a href="https://twitter.com/3dgrit" target="_blank"
+                    class="p-3 border border-zinc-800 text-[10px] uppercase font-bold tracking-widest hover:border-amber-500 transition-colors">X_Twitter</a>
+            </div>
+
+            <p class="mt-24 text-[9px] text-zinc-800 uppercase tracking-[0.6em]">3D_GRIT // N. JONES // SYDNEY 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        (async function loadSidebarFeed() {
+            const MAX_POSTS = 4;
+            const container = document.getElementById('feedItems');
+
+            try {
+                const res = await fetch('blog/posts.json');
+                const posts = await res.json();
+
+                posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const latest = posts.slice(0, MAX_POSTS);
+
+                if (latest.length === 0) {
+                    container.innerHTML = '<p style="font-size:0.55rem;color:#27272a;text-transform:uppercase;letter-spacing:0.15em;padding:0.5rem 0;">No entries yet</p>';
+                    return;
+                }
+
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                container.innerHTML = latest.map(post => {
+                    const d = new Date(post.date + 'T00:00:00');
+                    const dateStr = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+                    const thumbHtml = post.thumbnail
+                        ? `<img class="fi-thumb" src="${post.thumbnail}" alt="${post.title}" loading="lazy">`
+                        : `<div class="fi-thumb" style="display:flex;align-items:center;justify-content:center;background:#111;"><span style="color:#1a1a1a;font-size:0.4rem;">▪</span></div>`;
+
+                    const videoDot = post.video ? `<span class="fi-video-dot" title="Has video"></span>` : '';
+
+                    return `
+                        <a href="blog/${post.slug}.html" class="feed-item">
+                            ${thumbHtml}
+                            <div class="fi-body">
+                                <span class="fi-title">${post.title}${videoDot}</span>
+                                <span class="fi-date">${dateStr}</span>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.warn('Blog feed unavailable:', e);
+                container.innerHTML = '<p style="font-size:0.5rem;color:#18181b;text-transform:uppercase;letter-spacing:0.15em;padding:0.5rem 0;">Offline</p>';
+            }
+        })();
+    </script>
+
+</body>
+
+</html>

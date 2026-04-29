@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+    const posts = await getCollection('posts');
+    return posts.map(post => ({
+        params: { slug: post.id },
+        props: { post },
+    }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const d = new Date(post.data.date);
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dateStr = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+const catLabels: Record<string, string> = {
+    'tools-with-weight': 'Tools with Weight',
+    'calculated-margins': 'Calculated Margins',
+    'defensive-fluidity': 'Defensive Fluidity',
+    'normative-tools': 'Normative Tools',
+    'ai-experimentation': 'AI Experimentation',
+};
+---
+
+<Base title={`${post.data.title} | 3D_GRIT`} description={post.data.title}>
+
+    <main class="max-w-4xl mx-auto py-16 px-6">
+
+        <!-- Back nav -->
+        <a href={`/category/${post.data.category}/`} class="node-link" style="font-size:0.7rem;">
+            ◂ {catLabels[post.data.category] || post.data.category}
+        </a>
+
+        <!-- Post header -->
+        <div class="mt-8 mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="cat-badge">{catLabels[post.data.category]}</span>
+                <span class="status-header">{dateStr}</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter leading-[1.05] mb-6">
+                {post.data.title}
+            </h1>
+            {post.data.tags && post.data.tags.length > 0 && (
+                <div class="flex flex-wrap gap-2">
+                    {post.data.tags.map(tag => (
+                        <span class="tag-pill">{tag}</span>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        <!-- Video embed -->
+        {post.data.video && (
+            <div class="video-stage">
+                <iframe
+                    src={`${post.data.video}?rel=0&modestbranding=1&color=white`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        )}
+
+        <!-- Markdown body -->
+        <div class="prose">
+            <Content />
+        </div>
+
+    </main>
+
+</Base>
